@@ -1,0 +1,21 @@
+# =============================================================================
+# Root BUILD.bazel
+#
+# Every directory that Bazel treats as a "package" needs a BUILD (or BUILD.bazel)
+# file. The repository root is a package too, even though it currently has no
+# targets of its own — the real targets live in //app and //third_party.
+#
+# We expose the project-wide files here as a filegroup purely for convenience
+# (e.g. so tooling can reference them); it is not required to build the app.
+# =============================================================================
+
+package(default_visibility = ["//visibility:public"])
+
+filegroup(
+    name = "project_config",
+    srcs = [
+        ".bazelrc",
+        ".bazelversion",
+        "MODULE.bazel",
+    ],
+)

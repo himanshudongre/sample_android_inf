@@ -1,0 +1,48 @@
+# =============================================================================
+# //third_party/litert  —  the LiteRT (formerly TensorFlow Lite) runtime.
+#
+# The app depends on the single label `//third_party/litert`. We keep that name
+# stable so that *how* LiteRT is obtained (Maven vs vendored .aar) can change
+# without touching any application code.
+# =============================================================================
+
+package(default_visibility = ["//visibility:public"])
+
+# -----------------------------------------------------------------------------
+# DEFAULT: Maven-resolved.
+#
+# `@maven//:com_google_ai_edge_litert_litert` is produced by the maven.install()
+# block in //MODULE.bazel. rules_jvm_external already resolved LiteRT's full
+# transitive dependency graph, so this single alias is everything the app needs
+# to call `org.tensorflow.lite.Interpreter`.
+#
+# (The label name "litert" matches the last path segment of the package, so the
+#  shorthand label `//third_party/litert` resolves to this target.)
+# -----------------------------------------------------------------------------
+alias(
+    name = "litert",
+    actual = "@maven//:com_google_ai_edge_litert_litert",
+)
+
+# -----------------------------------------------------------------------------
+# OPTIONAL: fully-offline / vendored variant.
+#
+# To build without network access, download the LiteRT .aar into ./vendor/
+# (see vendor/README.md), then:
+#   1. uncomment the load() + aar_import() below,
+#   2. point the alias `actual` above at ":litert_vendored".
+#
+# WARNING: aar_import does NOT resolve transitive dependencies. You must list
+# every runtime dependency the .aar needs in `deps` yourself (vendor/README.md
+# explains how to discover them).
+# -----------------------------------------------------------------------------
+# load("@rules_android//rules:rules.bzl", "aar_import")
+#
+# aar_import(
+#     name = "litert_vendored",
+#     aar = "vendor/litert-1.0.1.aar",
+#     deps = [
+#         # e.g. "@maven//:com_google_ai_edge_litert_litert_api",
+#         #      ...any other transitive runtime deps...
+#     ],
+# )

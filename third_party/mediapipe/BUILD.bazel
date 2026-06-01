@@ -1,0 +1,36 @@
+# =============================================================================
+# //third_party/mediapipe  —  the MediaPipe Tasks Vision library.
+#
+# The app depends on the single label `//third_party/mediapipe`. As with LiteRT,
+# this indirection keeps the app decoupled from how MediaPipe is obtained.
+# =============================================================================
+
+package(default_visibility = ["//visibility:public"])
+
+# -----------------------------------------------------------------------------
+# DEFAULT: Maven-resolved.
+#
+# `@maven//:com_google_mediapipe_tasks_vision` is produced by maven.install() in
+# //MODULE.bazel. It bundles MediaPipe's native libraries and (via transitive
+# resolution) everything MediaPipe Tasks needs at runtime, exposing the
+# `com.google.mediapipe.tasks.vision.*` Java API (ImageClassifier, etc.).
+# -----------------------------------------------------------------------------
+alias(
+    name = "mediapipe",
+    actual = "@maven//:com_google_mediapipe_tasks_vision",
+)
+
+# -----------------------------------------------------------------------------
+# OPTIONAL: fully-offline / vendored variant. See vendor/README.md and the
+# matching note in //third_party/litert/BUILD.bazel.
+# -----------------------------------------------------------------------------
+# load("@rules_android//rules:rules.bzl", "aar_import")
+#
+# aar_import(
+#     name = "mediapipe_vendored",
+#     aar = "vendor/tasks-vision-0.10.29.aar",
+#     deps = [
+#         # MediaPipe Tasks pulls in protobuf-javalite, flogger, AndroidX, etc.
+#         # List them here when vendoring (vendor/README.md explains how).
+#     ],
+# )

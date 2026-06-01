@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The single-screen UI, described declaratively. MainActivity inflates this with
+  setContentView(R.layout.activity_main) and looks up the views by their
+  android:id (e.g. R.id.btn_litert).
+
+  We use plain framework widgets (android.widget.*) wrapped in a ScrollView so
+  the layout works on small screens without any AndroidX dependency.
+-->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- The image we run inference on (set from code). -->
+        <ImageView
+            android:id="@+id/image_view"
+            android:layout_width="224dp"
+            android:layout_height="224dp"
+            android:layout_gravity="center_horizontal"
+            android:adjustViewBounds="true"
+            android:contentDescription="@string/app_name"
+            android:scaleType="fitCenter" />
+
+        <!-- One-line status / progress message. -->
+        <TextView
+            android:id="@+id/status_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="@string/status_ready"
+            android:textStyle="bold" />
+
+        <!-- Trigger the LiteRT Interpreter path (the ViT-ready one). -->
+        <Button
+            android:id="@+id/btn_litert"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="@string/run_litert" />
+
+        <!-- Trigger the MediaPipe Tasks path. -->
+        <Button
+            android:id="@+id/btn_mediapipe"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="@string/run_mediapipe" />
+
+        <!-- Multi-line classification results. -->
+        <TextView
+            android:id="@+id/results_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:fontFamily="monospace"
+            android:text="@string/results_placeholder"
+            android:textIsSelectable="true" />
+    </LinearLayout>
+</ScrollView>

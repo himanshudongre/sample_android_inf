@@ -1,0 +1,133 @@
+# =============================================================================
+# MODULE.bazel  —  The root of this project's Bazel build, using "Bzlmod".
+#
+# Bzlmod is Bazel's dependency-management system (think "package.json" or
+# "pom.xml", but for Bazel). The presence of THIS file is what marks the
+# directory as the Bazel workspace root. Every external dependency the build
+# needs is declared here in one of three ways:
+#
+#   1. bazel_dep(...)        -> other Bazel rule-sets, fetched from the Bazel
+#                               Central Registry (https://registry.bazel.build).
+#   2. use_extension(...)    -> a "module extension" that generates extra repos
+#                               (e.g. it locates your Android SDK, or resolves
+#                               Maven/Gradle dependencies).
+#   3. maven.install(...)    -> the actual Java/Android library coordinates we
+#                               want (LiteRT, MediaPipe, etc.).
+#
+# Pinned versions below were the latest stable as of June 2026. See
+# docs/07_dependency_management.md for how to verify / bump them safely.
+# =============================================================================
+
+module(
+    name = "sample_android_inf",
+    version = "0.1.0",
+)
+
+# -----------------------------------------------------------------------------
+# (1) Bazel rule-sets we depend on.
+# -----------------------------------------------------------------------------
+
+# rules_android: provides android_binary / android_library / aar_import.
+# (Bazel's *built-in* Android rules were removed in Bazel 8, so this external
+#  rule-set is now the supported way to build Android apps with Bazel.)
+bazel_dep(name = "rules_android", version = "0.7.2")
+
+# rules_jvm_external: resolves Java/Android dependencies from Maven repositories
+# (Maven Central + Google's Maven). Crucially, it resolves the ENTIRE transitive
+# dependency graph automatically — which a raw `aar_import` of a local .aar file
+# can NOT do. This is why we let it fetch LiteRT/MediaPipe and their deps.
+bazel_dep(name = "rules_jvm_external", version = "7.0")
+
+# -----------------------------------------------------------------------------
+# (2a) Android build tools (aapt2, d8, ...) that rules_android needs.
+#      This downloads a prebuilt, version-matched "android_tools" bundle.
+# -----------------------------------------------------------------------------
+remote_android_extensions = use_extension(
+    "@rules_android//bzlmod_extensions:android_extensions.bzl",
+    "remote_android_tools_extensions",
+)
+use_repo(remote_android_extensions, "android_tools")
+
+# -----------------------------------------------------------------------------
+# (2b) Locate the *local* Android SDK on the build machine.
+#
+#      This extension reads the ANDROID_HOME environment variable (e.g.
+#      ~/Android/Sdk on Linux, ~/Library/Android/sdk on macOS), then auto-detects
+#      the highest installed platform (compile SDK) and the latest build-tools.
+#      It exposes everything as the external repo "@androidsdk".
+#
+#      => You MUST have ANDROID_HOME set and an SDK platform + build-tools
+#         installed. See docs/02_setup_linux.md.
+#
+#      NOTE: We deliberately do NOT configure the Android NDK. This sample only
+#      *consumes* prebuilt native libraries that already live inside the LiteRT
+#      and MediaPipe AARs, so there is no C/C++ for us to compile. (You would
+#      only need the NDK later if the EUPE ViT port required a custom native op
+#      or a custom delegate.)
+# -----------------------------------------------------------------------------
+android_sdk_repository_extension = use_extension(
+    "@rules_android//rules/android_sdk_repository:rule.bzl",
+    "android_sdk_repository_extension",
+)
+use_repo(android_sdk_repository_extension, "androidsdk")
+
+# Register the SDK as a Bazel "toolchain" so the Android rules can find it.
+register_toolchains(
+    "@androidsdk//:sdk-toolchain",
+    "@androidsdk//:all",
+)
+
+# -----------------------------------------------------------------------------
+# (3) Java / Android library dependencies, resolved from Maven.
+#
+#     rules_jvm_external downloads each artifact (and everything it transitively
+#     depends on) and exposes them as targets named "@maven//:<group_artifact>"
+#     where dots/colons/dashes become underscores. For example:
+#         com.google.mediapipe:tasks-vision
+#       becomes
+#         @maven//:com_google_mediapipe_tasks_vision
+#
+#     We wrap these in friendly aliases under //third_party (see
+#     third_party/litert/BUILD.bazel and third_party/mediapipe/BUILD.bazel) so
+#     the app depends on //third_party/litert and //third_party/mediapipe.
+# -----------------------------------------------------------------------------
+maven = use_extension("@rules_jvm_external//:extensions.bzl", "maven")
+
+maven.install(
+    name = "maven",
+    artifacts = [
+        # --- MediaPipe Tasks: Vision -----------------------------------------
+        # High-level, ready-made vision solutions (ImageClassifier, etc.). The
+        # AAR bundles its own native libraries and pulls LiteRT in under the hood.
+        "com.google.mediapipe:tasks-vision:0.10.29",
+
+        # --- LiteRT (formerly TensorFlow Lite) -------------------------------
+        # The low-level on-device inference runtime. We use the classic
+        # `org.tensorflow.lite.Interpreter` API, which is the most direct,
+        # well-documented way to run an arbitrary .tflite model (exactly what the
+        # future EUPE ViT port needs).
+        #
+        # !!! IMPORTANT VERSION NOTE !!!
+        # Use a 1.x ("V1") release here. LiteRT 2.x ("V2") REMOVED the
+        # `org.tensorflow.lite.Interpreter` class in favor of a different
+        # "CompiledModel" API, which would break LiteRtClassifier.java.
+        # See: https://github.com/google-ai-edge/LiteRT/issues/4775
+        # When bumping, pick the latest *1.x* version, not 2.x.
+        "com.google.ai.edge.litert:litert:1.0.1",
+    ],
+
+    # Where to download artifacts from. Order matters (first match wins).
+    # Google's Maven hosts AndroidX, MediaPipe and LiteRT; Central hosts the rest.
+    repositories = [
+        "https://maven.google.com",
+        "https://repo1.maven.org/maven2",
+    ],
+
+    # Reproducible builds: the fully-resolved dependency graph (every transitive
+    # artifact + its verified SHA-256) is locked into maven_install.json, which
+    # IS committed to git. Generate/update it with:  bazel run @maven//:pin
+    # See docs/07_dependency_management.md.
+    lock_file = "//:maven_install.json",
+)
+
+use_repo(maven, "maven")

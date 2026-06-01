@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  AndroidManifest.xml — the "table of contents" every Android app must have.
+  It declares the app's package id, which components (Activities) exist, the app
+  icon/label/theme, and the minimum/target Android versions.
+
+  `package` sets the Java package used for the generated R (resources) class and
+  the app's application id.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.example.sampleinf">
+
+    <!--
+      SDK levels:
+        minSdkVersion 24  -> Android 7.0. This is the floor required by MediaPipe
+                             Tasks (and comfortably supported by LiteRT).
+        targetSdkVersion  -> the API level the app is tested against. 34 = Android 14.
+      The *compile* SDK is chosen automatically by Bazel from the highest platform
+      installed in your Android SDK (see docs/02_setup_linux.md).
+    -->
+    <uses-sdk
+        android:minSdkVersion="24"
+        android:targetSdkVersion="34" />
+
+    <!--
+      This sample classifies a bundled image, so it needs no runtime permissions.
+      (If you later add camera capture, declare <uses-permission
+       android:name="android.permission.CAMERA"/> and request it at runtime.)
+    -->
+
+    <application
+        android:allowBackup="true"
+        android:label="@string/app_name"
+        android:icon="@android:drawable/sym_def_app_icon"
+        android:theme="@style/AppTheme">
+
+        <!-- The single screen of the app, marked as the launcher entry point. -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>

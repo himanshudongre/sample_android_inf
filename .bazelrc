@@ -1,0 +1,66 @@
+# =============================================================================
+# .bazelrc  —  Project-wide Bazel build flags.
+#
+# Bazel reads this file automatically on every invocation, so any flag set here
+# is applied without you having to type it on the command line. Flags are grouped
+# by the Bazel "command" they apply to:
+#   common --flag   -> applies to every command (build, test, run, query, ...)
+#   build  --flag   -> applies to `bazel build` (and `bazel run`, which builds first)
+#
+# Anything you put after a `--config=NAME` (e.g. `build:x86_64 --flag`) only takes
+# effect when you pass `--config=NAME` on the command line. That lets us define
+# named presets (see the ABI presets near the bottom).
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Bzlmod (the modern Bazel dependency system that reads MODULE.bazel).
+# It is the default in Bazel 8, but we set it explicitly so the project behaves
+# identically even if someone uses a slightly different Bazel version.
+# -----------------------------------------------------------------------------
+common --enable_bzlmod
+
+# -----------------------------------------------------------------------------
+# Java toolchain.
+#
+# `remotejdk_17` tells Bazel to DOWNLOAD a hermetic JDK 17 and use it to COMPILE
+# the app's Java code. This means your build does not depend on whatever JDK (if
+# any) is installed on the machine — a big reliability win. (Note: Bazel itself
+# still needs a JVM to *launch*; Bazelisk/Bazel ships with one for that.)
+#
+# AndroidX / MediaPipe / LiteRT artifacts are happy being compiled with JDK 17.
+# -----------------------------------------------------------------------------
+build --java_language_version=17
+build --java_runtime_version=remotejdk_17
+build --tool_java_language_version=17
+build --tool_java_runtime_version=remotejdk_17
+
+# -----------------------------------------------------------------------------
+# Which CPU architectures (ABIs) to put native .so libraries in the APK for.
+#
+# The LiteRT and MediaPipe AARs ship precompiled native libraries per-ABI. The
+# APK must contain the ABI that matches the device/emulator it runs on:
+#   - Physical phones (and Apple-Silicon emulators) are almost always arm64-v8a.
+#   - The default Android emulator on an x86_64 Linux/Windows host is x86_64.
+#
+# We default to a "fat" APK containing BOTH so the same APK runs on a typical
+# phone AND a typical desktop emulator. It is slightly larger; override with one
+# of the named presets below if you want a smaller, single-ABI APK.
+# -----------------------------------------------------------------------------
+build --fat_apk_cpu=arm64-v8a,x86_64
+
+# Named ABI presets (use with `--config=...`):
+build:arm64    --fat_apk_cpu=arm64-v8a            # physical phones, arm emulators
+build:x86_64   --fat_apk_cpu=x86_64               # standard desktop emulator
+build:allabi   --fat_apk_cpu=arm64-v8a,armeabi-v7a,x86,x86_64  # ship-everything
+
+# -----------------------------------------------------------------------------
+# Diagnostics: when something fails, print the full command and stack so the
+# error is actionable. Helpful while first getting the toolchain working.
+# -----------------------------------------------------------------------------
+common --verbose_failures
+
+# -----------------------------------------------------------------------------
+# Let developers keep machine-specific overrides in a git-ignored file without
+# editing this one. (Safe no-op if the file does not exist.)
+# -----------------------------------------------------------------------------
+try-import %workspace%/user.bazelrc

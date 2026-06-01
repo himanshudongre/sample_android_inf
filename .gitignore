@@ -1,0 +1,55 @@
+# =============================================================================
+# .gitignore — what NOT to commit.
+# =============================================================================
+
+# --- Bazel ------------------------------------------------------------------
+# Bazel creates these symlinks/outputs in the workspace root. Never commit them.
+/bazel-*
+# NOTE: maven_install.json is intentionally NOT ignored. It is the dependency
+# lock file and MUST be committed for reproducible builds.
+
+# --- Machine-specific Bazel overrides ---------------------------------------
+/user.bazelrc
+
+# --- Downloaded ML assets (fetched by tools/download_model.sh) --------------
+# Model weights are large, so we don't store them in git. They are downloaded
+# into the app's assets directory before building.
+# The label list and sample image are *derived/downloaded*, so they are ignored
+# too. Re-create them any time with: ./tools/download_model.sh
+/app/src/main/assets/*.tflite
+/app/src/main/assets/*.task
+/app/src/main/assets/labels.txt
+/app/src/main/assets/sample.jpg
+/models/*.tflite
+/models/*.task
+/models/*.bin
+
+# --- EUPE model-prep workdir (clone + downloaded copy) & conversion venv -----
+# Created by tools/prepare_eupe_model.sh. Large and reproducible — not committed.
+# NOTE: the canonical EUPE checkpoint IS committed via Git LFS at
+# models/eupe/EUPE-ViT-T.pt (so machines without Hugging Face access still get
+# it from the repo). We only ignore the throwaway working copies below.
+/build/
+/.venv-eupe/
+
+# --- Build artifacts --------------------------------------------------------
+*.apk
+*.aab
+
+# --- Android Studio / IntelliJ ----------------------------------------------
+.idea/
+*.iml
+local.properties
+.gradle/
+captures/
+
+# --- Python caches (from running the conversion scripts) --------------------
+__pycache__/
+*.pyc
+
+# --- Local Claude Code settings (machine-specific permissions) --------------
+.claude/settings.local.json
+
+# --- OS junk ----------------------------------------------------------------
+.DS_Store
+Thumbs.db

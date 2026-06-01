@@ -1,0 +1,50 @@
+# =============================================================================
+# //app  —  the Android application target.
+#
+# This is the only thing you actually "build": it compiles our Java sources,
+# packages the resources + assets (including the .tflite model), links in the
+# LiteRT and MediaPipe runtimes from //third_party, and produces an installable
+# APK.
+#
+# Build it with:   bazel build //app:app
+# The APK lands at: bazel-bin/app/app.apk
+# =============================================================================
+
+# android_binary / android_library come from rules_android (declared in
+# //MODULE.bazel). Bazel's built-in Android rules were removed in Bazel 8.
+load("@rules_android//rules:rules.bzl", "android_binary")
+
+android_binary(
+    name = "app",
+
+    # --- Java sources --------------------------------------------------------
+    # All of our app code. (For Kotlin you'd split this into an android_library
+    # built with rules_kotlin; we use Java here to keep the toolchain minimal.)
+    srcs = glob(["src/main/java/**/*.java"]),
+
+    # --- Manifest ------------------------------------------------------------
+    manifest = "src/main/AndroidManifest.xml",
+
+    # --- Android resources (layouts, strings, theme) -------------------------
+    resource_files = glob(["src/main/res/**"]),
+
+    # --- Assets (the model, labels, sample image, …) -------------------------
+    # `assets_dir` is the on-disk prefix; everything under it ships inside the
+    # APK and is reachable at runtime via Context.getAssets().
+    #
+    # The large files here (efficientnet_lite0.tflite, labels.txt, sample.jpg)
+    # are NOT in git — run ./tools/download_model.sh to populate them before
+    # building. The committed assets/README.md keeps this glob non-empty even
+    # before you download anything, so the build always succeeds (the app will
+    # just report "model not found" at runtime until you fetch it).
+    assets = glob(["src/main/assets/**"]),
+    assets_dir = "src/main/assets",
+
+    # --- Dependencies --------------------------------------------------------
+    # The clean third_party aliases — NOT raw Maven coordinates or .aar paths.
+    # This is the decoupling: the app depends on stable local labels.
+    deps = [
+        "//third_party/litert",
+        "//third_party/mediapipe",
+    ],
+)

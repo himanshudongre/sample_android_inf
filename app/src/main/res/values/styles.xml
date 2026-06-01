@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  App theme.
+
+  We deliberately inherit from a *framework* Material theme
+  (@android:style/Theme.Material.Light.DarkActionBar) instead of an AndroidX /
+  Material Components theme. Why: it keeps this first sample's dependency graph as
+  small as possible — no AndroidX UI libraries are needed just to show a few
+  buttons. (You can switch to a Material 3 / AndroidX theme later if you add
+  AndroidX widgets; that only requires adding the relevant Maven artifacts in
+  MODULE.bazel.)
+-->
+<resources>
+    <style name="AppTheme" parent="@android:style/Theme.Material.Light.DarkActionBar" />
+</resources>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- User-visible text lives in resources (not hard-coded) so it can be
+     translated and reused. Referenced from code as R.string.<name> and from
+     XML as @string/<name>. -->
+<resources>
+    <string name="app_name">Sample Inference</string>
+    <string name="run_litert">Run LiteRT (Interpreter)</string>
+    <string name="run_mediapipe">Run MediaPipe (Tasks)</string>
+    <string name="status_ready">Ready. Pick a backend to classify the image.</string>
+    <string name="results_placeholder">Results will appear here.</string>
+</resources>
